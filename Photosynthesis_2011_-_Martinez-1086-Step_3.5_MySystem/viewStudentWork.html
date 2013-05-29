@@ -3,6 +3,7 @@
 <head>
 <script type='text/javascript' src='data.js'></script>
 <script type='text/javascript' src='lz77.js'></script>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/2.0.0/jquery.min.js"></script>
 <script>
 var lz77 = new LZ77();
 
@@ -333,6 +334,7 @@ function getStudentDataHtml(nodeState) {
 
 		if(response != null) {
 			//get the response as a JSON objct
+			postToMySystem(response);
 			var response = JSON.parse(response);
 
 			if(response != null && response != '') {
@@ -518,11 +520,72 @@ function checkIfAnyStudentWorkHasIsSubmit(data) {
 	return hasIsSubmit;
 }
 
+function getMySystemWindow() {
+	return document.getElementById('runtime-iframe').contentWindow.MySystem;
+}
+
+function postToMySystem(learnerData) {
+	message  = {
+		'command':'loadStudentData',
+		'data': learnerData
+	}
+	document.getElementById('runtime-iframe').contentWindow.postMessage(message, "*");
+}
+
+function loadMySysPreview() {
+	var authorIframeId = 'mysystem2-authoring-iframe',
+      appIframeId = 'runtime-iframe',
+      authorIframeLoaded = false,
+      appIframeLoaded = false;
+
+  var createIframe = function(url, id, $elem, callback) {
+    $iframe = $('<iframe id='+id+'>').attr('src', url).attr('width', '100%').attr('height', 700);
+    $elem.append($iframe);
+    $('iframe#'+id).load(function()
+    {
+      callback(this);
+    });
+  };
+
+  var bothIframesLoaded= function() {
+    var dataStore      = new msaPreview.CouchDS(),
+        authorContent  = document.getElementById('mysystem2-authoring-iframe').contentWindow,
+        runtimeContent = getContentWindow();
+
+    var mysystem = getMySystem();
+
+    // this is the initialization method on the ember.js app:
+    authorContent.MSA.setupParentIFrame(null, this, mysystem);
+
+    // TODO: datastore needs a better api than content window....
+    dataStore.setAuthorContentWindow(authorContent);
+    dataStore.setLearnerContentWindow(runtimeContent);
+
+    var dataIds = window.location.hash;
+    if (dataIds) {
+      dataIds = dataIds.substring(1);    // rm hash
+      var data = dataIds.split("/");
+      if (!!data[0]){
+        dataStore.loadAuthoredData(data[0]);
+      }
+      if (data.length > 1 && !!data[1]){
+        dataStore.loadLearnerData(data[1]);
+      }
+    };
+	}; // bothIframesLoaded
+
+  createIframe('mysystem2/mysystem2.html', 'runtime-iframe', $('#runtime_td'), function(iframe){
+ 		loadStudentData();
+  });
+
+};
+
 </script>
 </head>
-<body onload='loadStudentData()'>
+<body onload='loadMySysPreview()'>
 <div id='metaDataDiv'></div>
 <div id='navigationDiv'></div>
+<div id='runtime_td'></div>
 <div id='studentDataDiv'></div>
 </body>
 </html>
