@@ -248,14 +248,19 @@ function displayStudentData() {
 								//this node state has work
 								var nodeStateStudentDataHtml = '';
 
+								getStudentDataHtml(nodeState,stepWorkId);
 								//display information about the node state
-								nodeStateStudentDataHtml += 'Revision: ' + revisionCounter + '<br>';
-								nodeStateStudentDataHtml += 'Step Work Id: ' + stepWorkId + '<br>';
-								nodeStateStudentDataHtml += 'Start Time: ' + startTime + '<br>';
-								nodeStateStudentDataHtml += 'End Time: ' + endTime + '<br>';
-								nodeStateStudentDataHtml += getStudentDataHtml(nodeState);
-								nodeStateStudentDataHtml += '<hr>';
-
+								nodeStateStudentDataHtml += '<div class="step">';
+								nodeStateStudentDataHtml += '<div class="textcontainer">';
+								nodeStateStudentDataHtml += 'Revision: ' + revisionCounter + '<br/>';
+								nodeStateStudentDataHtml += 'Step Work Id: ' + stepWorkId + '<br/>';
+								nodeStateStudentDataHtml += 'Start Time: <span class="date"> ' + startTime + '</span><br>';
+								nodeStateStudentDataHtml += 'End Time: <span class="date">' + endTime + '</span><br>';
+								nodeStateStudentDataHtml += "Score: <span id='score" + stepWorkId + "'></span><br/>";
+								nodeStateStudentDataHtml += "Categories: <span id='categories" + stepWorkId + "'></span><br/>";
+								nodeStateStudentDataHtml += '</div>';
+								nodeStateStudentDataHtml += "<div class='svgcontainer' id='stepwork" + stepWorkId + "'></div>";
+								nodeStateStudentDataHtml += '</div>';
 								//add this node state html to the top so that the latest node state is at the top
 								studentDataHtml = nodeStateStudentDataHtml + studentDataHtml;
 
@@ -274,14 +279,21 @@ function displayStudentData() {
 							if(nodeStateHasWork(nodeState)) {
 								//this node state has work
 								var nodeStateStudentDataHtml = '';
+								getStudentDataHtml(nodeState,stepWorkId);
 
 								//display information about the node state
-								nodeStateStudentDataHtml += 'Revision: ' + revisionCounter + '<br>';
-								nodeStateStudentDataHtml += 'Step Work Id: ' + stepWorkId + '<br>';
-								nodeStateStudentDataHtml += 'Start Time: ' + startTime + '<br>';
-								nodeStateStudentDataHtml += 'End Time: ' + endTime + '<br>';
-								nodeStateStudentDataHtml += getStudentDataHtml(nodeState);
-								nodeStateStudentDataHtml += '<hr>';
+								nodeStateStudentDataHtml += '<div class="step">';
+								nodeStateStudentDataHtml += '<div class="textcontainer">';
+								nodeStateStudentDataHtml += 'Revision: ' + revisionCounter + '<br/>';
+								nodeStateStudentDataHtml += 'Step Work Id: ' + stepWorkId + '<br/>';
+								nodeStateStudentDataHtml += 'Start Time: <span class="date"> ' + startTime + '</span><br>';
+								nodeStateStudentDataHtml += 'End Time: <span class="date">' + endTime + '</span><br>';
+								nodeStateStudentDataHtml += "Score: <span id='score" + stepWorkId + "'></span><br/>";
+								nodeStateStudentDataHtml += "Categories: <span id='categories" + stepWorkId + "'></span><br/>";
+								nodeStateStudentDataHtml += '</div>';
+								nodeStateStudentDataHtml += "<div class='svgcontainer' id='stepwork" + stepWorkId + "'></div>";
+								nodeStateStudentDataHtml += '</div>';
+
 
 								//add this node state html to the top so that the latest node state is at the top
 								studentDataHtml = nodeStateStudentDataHtml + studentDataHtml;
@@ -325,7 +337,7 @@ function displayStudentData() {
  * @param nodeState the node state to get student data from
  * @return the html that will display the student work
  */
-function getStudentDataHtml(nodeState) {
+function getStudentDataHtml(nodeState,stepWorkId) {
 	var studentDataHtml = '';
 
 	if(nodeState != null) {
@@ -334,80 +346,72 @@ function getStudentDataHtml(nodeState) {
 
 		if(response != null) {
 			//get the response as a JSON objct
-			postToMySystem(response);
-			var response = JSON.parse(response);
+			postLoadStudentData(response,stepWorkId);
+		}
+	}
+}
 
-			if(response != null && response != '') {
-				//get the MySystem.GraphicPreview field
-				var mySystemGraphicPreview = response['MySystem.GraphicPreview'];
+function processStudentResponse(responseJson,stepWorkId,score,categories) {
+	var response = JSON.parse(responseJson);
+	var studentDataHtml ="";
 
-				if(mySystemGraphicPreview != null && mySystemGraphicPreview != '') {
-					//get the LAST_GRAPHIC_PREVIEW
-					var lastGraphicPreview = mySystemGraphicPreview['LAST_GRAPHIC_PREVIEW'];
+	if(response != null && response != '') {
+		//get the MySystem.GraphicPreview field
+		var mySystemGraphicPreview = response['MySystem.GraphicPreview'];
 
-					if(lastGraphicPreview != null && lastGraphicPreview != '') {
-						//get the svg string
-						var svgString = lastGraphicPreview.svg;
+		if(mySystemGraphicPreview != null && mySystemGraphicPreview != '') {
+			//get the LAST_GRAPHIC_PREVIEW
+			var lastGraphicPreview = mySystemGraphicPreview['LAST_GRAPHIC_PREVIEW'];
 
-						//unescape the svg string
-						svgString = unescape(svgString);
+			if(lastGraphicPreview != null && lastGraphicPreview != '') {
+				//get the svg string
+				var svgString = lastGraphicPreview.svg;
 
-						//decompress the svg string
-						svgString = lz77.decompress(svgString);
+				//unescape the svg string
+				svgString = unescape(svgString);
 
-						//add the xmlns:xlink if it does not exist
-						if(svgString.indexOf('xmlns:xlink="http://www.w3.org/1999/xlink"') == -1) {
-							//the xmlns:xlink does not exist so we will inject it into the svg tag
+				//decompress the svg string
+				svgString = lz77.decompress(svgString);
 
-							//create the pattern to match the opening svg tag
-							var svgOpenTagPattern = /<svg .*?>/;
 
-							//try to find the pattern in the svg string
-							var svgOpenTagMatch = svgOpenTagPattern.exec(svgString);
+				//create the pattern to match the opening svg tag
+				var svgOpenTagPattern = /<svg [^>]+>/;
+				var goodSVGTag  = '<svg freakazoid="guga" style="position:relative; left:0; top:0; width:100%; height:100%;" preserveAspectRatio="xMinYMin meet" viewBox="0 40 800 600" width="300" height="150" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">';
 
-							//get the first match
-							var svgOpenTagMatch0 = svgOpenTagMatch[0];
+				svgString = svgString.replace(svgOpenTagPattern,goodSVGTag);
 
-							if(svgOpenTagMatch0 != null) {
-								//inject the xmlns:xlink into the svg opening tag
-								var newSVGOpenTag = svgOpenTagMatch0.replace('>', ' xmlns:xlink="http://www.w3.org/1999/xlink">');
+				//replace all instances of imagexlink with image xlink
+				svgString = svgString.replace(/imagexlink/g, 'image xlink');
 
-								//replace the svg opening tag in the svg string
-								svgString = svgString.replace(svgOpenTagMatch0, newSVGOpenTag);
-							}
-						}
+				// fix incorrect image widths and heights...
+				var dimensionPattern = /(<image x="\d+" y="\d+") (width="10" height="10)"/g
+				svgString = svgString.replace(dimensionPattern,"$1 width='100' height='110'");
 
-						//replace all instances of imagexlink with image xlink
-						svgString = svgString.replace(/imagexlink/g, 'image xlink');
+				//add the </image> closing tags if they are not present
+				//create the pattern to match opening image tags with an optional closing tag
+				var pattern = /(<image .*?>)(<\/image>)?/g;
 
-						//add the </image> closing tags if they are not present
+				//find the first match
+				var match = pattern.exec(svgString);
 
-						//create the pattern to match opening image tags with an optional closing tag
-						var pattern = /(<image .*?>)(<\/image>)?/g;
+				//loop until we have found all the image tags
+				while(match != null) {
+					//get the whole match
+					var wholeMatch = match[0];
 
-						//find the first match
-						var match = pattern.exec(svgString);
+					//get the image opening tag
+					var match1 = match[1];
 
-						//loop until we have found all the image tags
-						while(match != null) {
-							//get the whole match
-							var wholeMatch = match[0];
+					//get the image closing tag if it exists
+					var match2 = match[2];
 
-							//get the image opening tag
-							var match1 = match[1];
-
-							//get the image closing tag if it exists
-							var match2 = match[2];
-
-							if(match2 == null) {
-								//the image closing tag does not exist so we will insert it
-								svgString = svgString.replace(wholeMatch, wholeMatch + "</image>");
-							}
-
-							//find the next match
-							match = pattern.exec(svgString);
-						}
+					if(match2 == null) {
+						//the image closing tag does not exist so we will insert it
+						svgString = svgString.replace(wholeMatch, wholeMatch + "</image>");
 					}
+
+					//find the next match
+					match = pattern.exec(svgString);
 				}
 			}
 		}
@@ -420,8 +424,9 @@ function getStudentDataHtml(nodeState) {
 		//the svg string is the student work
 		studentDataHtml = svgString;
 	}
-
-	return studentDataHtml;
+	$('#stepwork'+stepWorkId).html(studentDataHtml);
+	$('#score'+stepWorkId).html(score);
+	$('#categories'+stepWorkId).html(categories);
 }
 
 /**
@@ -524,10 +529,19 @@ function getMySystemWindow() {
 	return document.getElementById('runtime-iframe').contentWindow.MySystem;
 }
 
-function postToMySystem(learnerData) {
-	message  = {
+function postLoadStudentData(learnerData,stepWorkId) {
+	var message  = {
 		'command':'loadStudentData',
-		'data': learnerData
+		'data': learnerData,
+		'stepWorkId': stepWorkId
+	}
+	document.getElementById('runtime-iframe').contentWindow.postMessage(message, "*");
+}
+
+function postLoadAuthorData(authorData) {
+	var message  = {
+		'command':'loadAuthorData',
+		'data': authorData
 	}
 	document.getElementById('runtime-iframe').contentWindow.postMessage(message, "*");
 }
@@ -580,12 +594,40 @@ function loadMySysPreview() {
 
 };
 
+function receiveMessage(message) {
+  if(message.data) {
+    if (message.data.command === 'loadStudentData') {
+      processStudentResponse(message.data.response, message.data.stepWorkId, message.data.score, message.data.categories);
+    }
+  }
+}
+
+$(document).ready(function() {
+	$('#save').bind('click', function (e) {
+		e.preventDefault();
+		var data = $('#authorjson').val();
+		postLoadAuthorData(data);
+		displayStudentData();
+	});
+	loadMySysPreview();
+});
+
+
+window.addEventListener("message", receiveMessage, false);
+
 </script>
 </head>
-<body onload='loadMySysPreview()'>
 <div id='metaDataDiv'></div>
+<div id='authoring'>
+		<textarea id="authorjson" name="authorjson"></textarea>
+		<button id="save" name="save">update rubric</button>
+</div>
 <div id='navigationDiv'></div>
-<div id='runtime_td'></div>
+<div id='runtime_td' style='display: none;'></div>
+
+	<!-- If you don't hide the div, you get a live preview of the diagram.. -->
+	<!-- <div id='runtime_td'></div> -->
+
 <div id='studentDataDiv'></div>
 </body>
 </html>
