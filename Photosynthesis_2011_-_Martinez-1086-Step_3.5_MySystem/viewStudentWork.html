@@ -1,10 +1,62 @@
 <!DOCTYPE html>
 <html>
 <head>
+<meta charset="UTF-8">
 <script type='text/javascript' src='data.js'></script>
 <script type='text/javascript' src='lz77.js'></script>
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/2.0.0/jquery.min.js"></script>
+<style>
+	body {
+		font-family: sans-serif;
+		padding: 2em;
+	}
+	.step {
+		float: left;
+		margin-top: 2em;
+		padding: 1em;
+		border: 1px solid;
+	}
+	.textcontainer {
+		position: relative;
+		float: left;
+		clear: none;
+		font-family: monospace;
+	}
+
+	.svgcontainer {
+		float: right;
+		position: relative;
+		display: block;
+		overflow: hidden;
+		width: 500px;
+		margin: 1em;
+		height: 350;
+	}
+	#authoring {
+		margin: 2em;
+	}
+	#authorjson {
+		width: 100%;
+		height: 60px;
+	}
+	#metaDataDiv {
+		width:100%;
+		background-color: #ccc;
+		padding: 4px;
+	}
+	#navigationDiv {
+		width:100%;
+		background-color: #ccc;
+		padding: 4px;
+	}
+	.label {
+		padding-left: 2em;
+		padding-right: 0.5em;
+		font-weight: bold;
+	}
+</style>
 <script>
+
 var lz77 = new LZ77();
 
 /**
@@ -18,25 +70,29 @@ function loadStudentData() {
 		return;
 	}
 
-	//display the project, run, and step information
-	document.getElementById('metaDataDiv').innerHTML += 'Project Name: ' + data.projectName + '<br>';
-	document.getElementById('metaDataDiv').innerHTML += 'Project Id: ' + data.projectId + '<br>';
-	document.getElementById('metaDataDiv').innerHTML += 'Run Id: ' + data.runId + '<br>';
-	document.getElementById('metaDataDiv').innerHTML += 'Step Name: ' + data.stepName + '<br>';
-	document.getElementById('metaDataDiv').innerHTML += '<hr>';
 
-	//add the drop down to select the workgroup id
-	document.getElementById('navigationDiv').innerHTML += 'Workgroup Id: <select id="workgroupIdSelect" onchange="displayStudentData()"></select>';
-	document.getElementById('navigationDiv').innerHTML += '&nbsp';
+	$('#metaDataDiv').append('<span class="label">Project ID:</span>');
+	$('#metaDataDiv').append(data.projectId);
 
-	//add the previous button
-	document.getElementById('navigationDiv').innerHTML += '<input type="button" value="Previous" onclick="displayPrevious()"/>';
-	document.getElementById('navigationDiv').innerHTML += '&nbsp';
+	$('#metaDataDiv').append('<span class="label">Name:</span>');
+	$('#metaDataDiv').append(data.projectName);
 
-	//add the next button
-	document.getElementById('navigationDiv').innerHTML += '<input type="button" value="Next" onclick="displayNext()"/>';
+	$('#metaDataDiv').append('<span class="label">Run:</span>');
+	$('#metaDataDiv').append(data.runId);
 
-	//check if any of the student work has isSubmit=true
+	$('#metaDataDiv').append('<span class="label"> Step:</span>');
+	$('#metaDataDiv').append(data.stepName);
+
+
+	$('#navigationDiv').append('<span class="label">Workgroup ID:</span>');
+	$('#navigationDiv').append('<select id="workgroupIdSelect" onchange="displayStudentData()">');
+
+	$('#navigationDiv').append('<span class="label"></span>');
+	$('#navigationDiv').append('<input type="button" value="⇠ Previous" onclick="displayPrevious()"/>');
+
+	$('#navigationDiv').append('<span class="label"></span>');
+	$('#navigationDiv').append('<input type="button" value="Next ⇢" onclick="displayNext()"/>');
+
 	if(checkIfAnyStudentWorkHasIsSubmit(data)) {
 		/*
 		 * there is student work with isSubmit=true so we will allow
